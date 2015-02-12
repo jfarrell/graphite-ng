@@ -6,6 +6,7 @@ PACKAGES=${project} carbon-es
 GOM_GROUPS=test,carbon
 
 export PATH := $(abspath ./_vendor/bin):$(PATH)
+SYSTEM_GOPATH:=$(GOPATH)
 export GOPATH := $(abspath ./_vendor/):$(GOPATH)
 
 GOM=$(if $(TRAVIS),$(HOME)/gopath/bin/gom,gom)
@@ -17,11 +18,11 @@ clean:
 	rm -f executor-*.go
 
 run:
-	$(GOPATH)/bin/${project}
+	$(SYSTEM_GOPATH)/bin/${project}
 
 $(project): deps
 	rm -f executor-*.go
-	$(GOM) build -i -o $(GOPATH)/bin/${project} -a
+	$(GOM) build -i -o $(SYSTEM_GOPATH)/bin/${project} -a
 
 deps:
 	$(GOM) -groups=$(GOM_GROUPS) install
