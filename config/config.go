@@ -27,13 +27,17 @@ type storeTextInfo struct {
 	Path string
 }
 
+type cassandraStrategyOptions struct {
+	Options map[string]int
+}
+
 type storeCassandraInfo struct {
 	Keyspace            string
 	Servers             []string
 	Username            string
 	Password            string
 	ReplicationStrategy string
-	StrategyOptions     string
+	StrategyOptions     cassandraStrategyOptions `toml:"strategy_options"`
 	LocalDcName         string
 	Retentions          []string
 }

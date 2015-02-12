@@ -12,10 +12,11 @@ import (
 
 type CassandraStore struct {
 	Cluster             *cql.ClusterConfig
+	Keyspace            string
 	Retentions          []CassandraRetention
 	LocalDcName         string
 	ReplicationStrategy string
-	StrategyOptions     string
+	StrategyOptions     map[string]int
 	Session             *cql.Session
 }
 
@@ -59,8 +60,8 @@ func NewCassandraStore(config config.Main) Store {
 
 	store.Cluster = cql.NewCluster(config.StoreCassandra.Servers...)
 	store.Cluster.Authenticator = password_auth
-	store.Cluster.Keyspace = config.StoreCassandra.Keyspace
-	store.StrategyOptions = config.StoreCassandra.StrategyOptions
+	store.Keyspace = config.StoreCassandra.Keyspace
+	store.StrategyOptions = config.StoreCassandra.StrategyOptions.Options
 	store.ReplicationStrategy = config.StoreCassandra.ReplicationStrategy
 
 	retentions := make([]CassandraRetention, len(config.StoreCassandra.Retentions))
@@ -73,9 +74,48 @@ func NewCassandraStore(config config.Main) Store {
 	}
 	store.Retentions = retentions
 
+	initializeCassandraKeyspace(store)
+	store.Cluster.Keyspace = store.Keyspace
+
 	store.Session, _ = store.Cluster.CreateSession()
+	createCassandraTables(store)
 
 	return store
+}
+
+func strategyOptionsToString(store *CassandraStore) string {
+	mapping := make([]string, len(store.StrategyOptions))
+	counter := 0
+	for key, value := range store.StrategyOptions {
+		mapping[counter] = fmt.Sprintf("'%s' : %s", key, value)
+		counter += 1
+	}
+	return strings.Join(mapping, ",")
+}
+
+func createCassandraTables(store *CassandraStore) {
+	tables := []string{"global_nodes", "metadata"}
+	if store.LocalDcName != "" {
+		tables = append(tables, store.LocalDcName)
+	}
+
+	for _, table_name := range tables {
+		query := fmt.Sprintf("CREATE TABLE %s (key text, column1 test, value test, PRIMARY KEY(key, column 1));", table_name)
+		if err := store.Session.Query(query); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func initializeCassandraKeyspace(store *CassandraStore) {
+	session, _ := store.Cluster.CreateSession()
+	replication_options := strategyOptionsToString(store)
+	query := fmt.Sprintf("CREATE KESYPACE IF NOT EXISTS %s WITH REPLICATION {'class' %s : %s};", store.Keyspace, store.ReplicationStrategy, replication_options)
+
+	if err := session.Query(query); err != nil {
+		panic(err)
+	}
+	session.Close()
 }
 
 func init() {
