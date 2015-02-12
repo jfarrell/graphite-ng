@@ -1,0 +1,16 @@
+gom 'github.com/BurntSushi/toml'
+gom 'github.com/influxdb/influxdb/client', :commit => 'bae5679c2ef1b3b96b21e5bd887c9dc7860a3f8a'
+gom 'github.com/mattbaird/elastigo/lib'
+
+group :carbon do
+  gom 'github.com/stvp/go-toml-config'
+end
+
+group :test do
+  gom 'golang.org/x/tools/cmd/vet'
+  gom 'golang.org/x/tools/cmd/cover'
+  gom 'gopkg.in/check.v1'
+  gom 'github.com/golang/lint/golint'
+  gom 'github.com/onsi/ginkgo/ginkgo'
+  gom 'github.com/onsi/gomega'
+end

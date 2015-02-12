@@ -2,3 +2,7 @@ graphite-ng
 carbon-es/carbon-es
 tags
 .tags
+executor-[0-9]*.go
+_vendor/*
+coverage.out
+*.coverprofile

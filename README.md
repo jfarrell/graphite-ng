@@ -67,6 +67,13 @@ Then open something like this in your browser:
 These test metrics are available by default through the text store.  You'll probably want
 to add your real metrics into influxdb.  Which, by the way, is [really easy](http://influxdb.org/docs/) to install.
 
+# Development
+
+A Dockerfile is provided to help make development easier. To get started run
+
+    docker build -t graphite-ng .
+    docker run -i -p 8080:8080 -v $(pwd)/:/usr/share/go/src/github.com/graphite-ng/graphite-ng -t graphite-ng bash
+    make && make run
 
 # Function plugins
 
