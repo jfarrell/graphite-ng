@@ -5,11 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/BurntSushi/toml"
 	"github.com/graphite-ng/graphite-ng/config"
 	"github.com/graphite-ng/graphite-ng/functions"
 	"github.com/graphite-ng/graphite-ng/stack"
 	"github.com/graphite-ng/graphite-ng/stores"
+	"github.com/graphite-ng/graphite-ng/thrift/gen-go"
 	"github.com/graphite-ng/graphite-ng/timespec"
 	"math/rand"
 	"net/http"
@@ -245,6 +247,79 @@ func corsHeaders(fn http.HandlerFunc) http.HandlerFunc {
 		fn(w, r)
 	}
 }
+
+type ThriftHandler struct{}
+
+func (g *ThriftHandler) Render() (r *graphiteng.RenderData, err error) {
+	r = graphiteng.NewRenderData()
+	r.Target = "test.metric1"
+
+	for _, store := range stores.List {
+		has, err := (*store).Has(r.Target)
+		if err != nil {
+			fmt.Printf(err.Error())
+		} else if has {
+			getEl, getErr := (*store).Get(r.Target)
+			//until := int32(time.Now().Unix())
+			until := int32(600)
+			getEl.Settings <- int32(0)
+			getEl.Settings <- until
+			if getErr == nil {
+				for {
+					dp := <-getEl.Link
+					fmt.Println(dp)
+
+					if dp.Ts > until {
+						break
+					}
+
+					d := graphiteng.NewDatapoint()
+					d.Value = dp.Value
+					d.Timestamp = dp.Ts
+					r.Datapoints = append(r.Datapoints, d)
+				}
+			}
+		}
+	}
+
+	return r, nil
+}
+
+func (g *ThriftHandler) Metrics() (r graphiteng.MetricList, err error) {
+	r = graphiteng.MetricList{}
+	for _, store := range stores.List {
+		list, err := (*store).List()
+		if err != nil {
+			fmt.Printf(err.Error())
+		} else {
+			for _, metric := range list {
+				r = append(r, metric)
+			}
+		}
+	}
+
+	return r, nil
+}
+
+// thriftListen will start the thrift server.
+func thriftListen(addr string) {
+	transportFactory := thrift.NewTTransportFactory()
+	protocolFactory := thrift.NewTJSONProtocolFactory()
+	transport, err := thrift.NewTServerSocket(addr)
+
+	if err != nil {
+		fmt.Println("Error starting the thrift server on ", addr)
+		return
+	}
+
+	handler := new(ThriftHandler)
+	processor := graphiteng.NewGraphiteNGProcessor(handler)
+	server := thrift.NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)
+
+	fmt.Println("Starting the thrift server on ", addr)
+	go server.Serve()
+}
+
 func main() {
 	var config config.Main
 	flag.Usage = usage
@@ -267,6 +342,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	thriftListen("127.0.0.1:9090")
 
 	http.HandleFunc("/render", corsHeaders(renderHandler))
 	http.HandleFunc("/render/", corsHeaders(renderHandler))
