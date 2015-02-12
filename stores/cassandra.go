@@ -75,7 +75,7 @@ func NewCassandraStore(config config.Main) Store {
 }
 
 func init() {
-	InitFn["influxdb"] = NewCassandraStore
+	InitFn["cassandra"] = NewCassandraStore
 }
 
 func (i CassandraStore) Add(metric metrics.Metric) (err error) {
@@ -85,12 +85,6 @@ func (i CassandraStore) Add(metric metrics.Metric) (err error) {
 
 func (i CassandraStore) Get(name string) (our_el *chains.ChainEl, err error) {
 
-	our_el = chains.NewChainEl()
-	go func(our_el *chains.ChainEl) {
-		from := <-our_el.Settings
-		until := <-our_el.Settings
-
-	}(our_el)
 	return our_el, nil
 }
 
