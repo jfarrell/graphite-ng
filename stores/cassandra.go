@@ -15,6 +15,7 @@ type CassandraStore struct {
 	LocalDcName         string
 	ReplicationStrategy string
 	StrategyOptions     string
+	Session             *cql.Session
 }
 
 type CassandraRetention struct {
@@ -70,6 +71,8 @@ func NewCassandraStore(config config.Main) Store {
 		retentions[i] = retention
 	}
 	store.Retentions = retentions
+
+	store.Session, _ = store.Cluster.CreateSession()
 
 	return store
 }
