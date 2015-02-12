@@ -1,11 +1,12 @@
 package config
 
 type Main struct {
-	ListenAddr  string                 `toml:"listen_addr"`
-	Stores      []string               `toml:"stores"`
-	StoreES     storeElasticsearchInfo `toml:"store_elasticsearch"`
-	StoreInflux storeInfluxdbInfo      `toml:"store_influxdb"`
-	StoreText   storeTextInfo          `toml:"store_text"`
+	ListenAddr     string                 `toml:"listen_addr"`
+	Stores         []string               `toml:"stores"`
+	StoreCassandra storeCassandraInfo     `toml:"store_cassandra"`
+	StoreES        storeElasticsearchInfo `toml:"store_elasticsearch"`
+	StoreInflux    storeInfluxdbInfo      `toml:"store_influxdb"`
+	StoreText      storeTextInfo          `toml:"store_text"`
 }
 
 type storeElasticsearchInfo struct {
@@ -24,4 +25,14 @@ type storeInfluxdbInfo struct {
 
 type storeTextInfo struct {
 	Path string
+}
+
+type storeCassandraInfo struct {
+	keyspace             string
+	servers              []string
+	username             string
+	password             string
+	replication_strategy string
+	strategy_options     string
+	local_dc_name        string
 }

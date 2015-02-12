@@ -10,20 +10,15 @@ import (
 )
 
 type CassandraStore struct {
-	keyspace             string
-	servers              []string
-	username             string
-	password             string
-	replication_strategy string
-	strategy_options     string
-	local_dc_name        string
 }
 
 type CassandraRetention struct {
 }
 
 func NewCassandraStore(config config.Main) Store {
-	return
+	store := new(CassandraStore)
+
+	return store
 
 }
 
