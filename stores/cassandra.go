@@ -16,7 +16,7 @@ type CassandraStore struct {
 	Retentions          []CassandraRetention
 	LocalDcName         string
 	ReplicationStrategy string
-	StrategyOptions     map[string]int
+	StrategyOptions     map[string]config.CassandraReplication
 	Session             *cql.Session
 }
 
@@ -63,7 +63,7 @@ func NewCassandraStore(config config.Main) Store {
 	}
 
 	store.Keyspace = config.StoreCassandra.Keyspace
-	store.StrategyOptions = config.StoreCassandra.StrategyOptions.Options
+	store.StrategyOptions = config.StoreCassandra.StrategyOptions
 	store.ReplicationStrategy = config.StoreCassandra.ReplicationStrategy
 
 	retentions := make([]CassandraRetention, len(config.StoreCassandra.Retentions))
@@ -89,7 +89,8 @@ func strategyOptionsToString(store *CassandraStore) string {
 	mapping := make([]string, len(store.StrategyOptions))
 	counter := 0
 	for key, value := range store.StrategyOptions {
-		mapping[counter] = fmt.Sprintf("'%s' : %s", key, value)
+		val := strconv.Itoa(value.Replication)
+		mapping[counter] = fmt.Sprintf("'%s' : %s", key, val)
 		counter += 1
 	}
 	return strings.Join(mapping, ",")
@@ -102,8 +103,8 @@ func createCassandraTables(store *CassandraStore) {
 	}
 
 	for _, table_name := range tables {
-		query := fmt.Sprintf("CREATE TABLE %s (key text, column1 text, value text, PRIMARY KEY(key, column1));", table_name)
-		if err := store.Session.Query(query); err != nil {
+		query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (key text, column1 text, value text, PRIMARY KEY(key, column1))`, table_name)
+		if err := store.Session.Query(query).Exec(); err != nil {
 			panic(err)
 		}
 	}
@@ -112,9 +113,9 @@ func createCassandraTables(store *CassandraStore) {
 func initializeCassandraKeyspace(store *CassandraStore) {
 	session, _ := store.Cluster.CreateSession()
 	replication_options := strategyOptionsToString(store)
-	query := fmt.Sprintf("CREATE KESYPACE IF NOT EXISTS %s WITH REPLICATION {'class' %s : %s};", store.Keyspace, store.ReplicationStrategy, replication_options)
+	query := fmt.Sprintf(`CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class' : '%s', %s}`, store.Keyspace, store.ReplicationStrategy, replication_options)
 
-	if err := session.Query(query); err != nil {
+	if err := session.Query(query).Exec(); err != nil {
 		panic(err)
 	}
 	session.Close()
