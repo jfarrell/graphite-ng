@@ -28,12 +28,12 @@ type storeTextInfo struct {
 }
 
 type storeCassandraInfo struct {
-	keyspace             string
-	servers              []string
-	username             string
-	password             string
-	replication_strategy string
-	strategy_options     string
-	local_dc_name        string
-	retentions           []string
+	Keyspace            string
+	Servers             []string
+	Username            string
+	Password            string
+	ReplicationStrategy string
+	StrategyOptions     string
+	LocalDcName         string
+	Retentions          []string
 }
