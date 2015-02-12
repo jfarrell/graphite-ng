@@ -100,7 +100,7 @@ func createCassandraTables(store *CassandraStore) {
 	}
 
 	for _, table_name := range tables {
-		query := fmt.Sprintf("CREATE TABLE %s (key text, column1 test, value test, PRIMARY KEY(key, column 1));", table_name)
+		query := fmt.Sprintf("CREATE TABLE %s (key text, column1 text, value text, PRIMARY KEY(key, column1));", table_name)
 		if err := store.Session.Query(query); err != nil {
 			panic(err)
 		}
