@@ -1,6 +1,7 @@
 gom 'github.com/BurntSushi/toml'
 gom 'github.com/influxdb/influxdb/client', :commit => 'bae5679c2ef1b3b96b21e5bd887c9dc7860a3f8a'
 gom 'github.com/mattbaird/elastigo/lib'
+gom 'github.com/gocql/gocql'
 
 group :carbon do
   gom 'github.com/stvp/go-toml-config'

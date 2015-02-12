@@ -6,8 +6,7 @@ PACKAGES=${project} carbon-es
 GOM_GROUPS=test,carbon
 
 export PATH := $(abspath ./_vendor/bin):$(PATH)
-GOPATH := ${PWD}/_vendor:${GOPATH}
-export GOPATH
+export GOPATH := $(abspath ./_vendor/):$(GOPATH)
 
 GOM=$(if $(TRAVIS),$(HOME)/gopath/bin/gom,gom)
 
