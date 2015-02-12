@@ -1,18 +1,16 @@
 package stores
 
 import (
-	"fmt"
 	cql "github.com/gocql/gocql"
 	"github.com/graphite-ng/graphite-ng/chains"
 	"github.com/graphite-ng/graphite-ng/config"
 	"github.com/graphite-ng/graphite-ng/metrics"
-	"github.com/graphite-ng/graphite-ng/util"
 	"strconv"
-	"string"
+	"strings"
 )
 
 type CassandraStore struct {
-	cluster    *gocql.ClusterConfig
+	cluster    *cql.ClusterConfig
 	retentions []CassandraRetention
 }
 
@@ -21,29 +19,39 @@ type CassandraRetention struct {
 	period     string
 }
 
-func retentionToTimeIntervals(retention CassandraRetention) {
-	res := string.Split(retention.resolution, ":")
-	res, er = strconv.Atoi(res)
-	p := string.Split(retention.period, ":")
-
-	return retentionTypeToTime(res, p)
+// Dumb function to get a simple retention rate
+// This really needs to come from the config
+func retentions() {
+	retention = new(CassandraRetention)
+	retention.resolution = "1m"
+	retention.period = "1w"
+	return []CassandraRetention{retention}
 }
 
-func retentionTypeToTime(int time, string period) {
+func retentionToTimeIntervals(retention string) int {
+	res := strings.Split(retention, ":")
+	time, _ := strconv.Atoi(res[0])
+	retention_time := retentionTypeToTime(time, res[1])
+
+	return retention_time
+}
+
+func retentionTypeToTime(time int, period string) int {
 	switch period {
-	case 's':
+	case "s":
 		return time * 1
-	case 'm':
+	case "m":
 		return time * 60
-	case 'h':
+	case "h":
 		return time * 3600
-	case 'd':
+	case "d":
 		return time * 86400
-	case 'w':
+	case "w":
 		return time * 604800
-	case 'y':
+	case "y":
 		return time * 31536000
 	}
+	return 0
 }
 
 func NewCassandraStore(config config.Main) Store {

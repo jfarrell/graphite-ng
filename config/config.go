@@ -35,4 +35,5 @@ type storeCassandraInfo struct {
 	replication_strategy string
 	strategy_options     string
 	local_dc_name        string
+	retentions           []string
 }
