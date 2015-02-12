@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"fmt"
 	cql "github.com/gocql/gocql"
 	"github.com/graphite-ng/graphite-ng/chains"
 	"github.com/graphite-ng/graphite-ng/config"
@@ -82,17 +83,23 @@ func init() {
 }
 
 func (i CassandraStore) Add(metric metrics.Metric) (err error) {
-	return
 
+	return
 }
 
 func (i CassandraStore) Get(name string) (our_el *chains.ChainEl, err error) {
 
-	return our_el, nil
+	return
 }
 
 func (i CassandraStore) Has(name string) (found bool, err error) {
-
+	query := fmt.Sprintf("SELECT COUNT(*) FROM dc_%s_nodes WHERE key='%s' LIMIT 1", name, i.LocalDcName)
+	count := 0
+	if err := i.Session.Query(query).Scan(&count); err != nil {
+		panic(err)
+	} else if count > 0 {
+		found = true
+	}
 	return
 }
 func (i CassandraStore) List() (list []string, err error) {
