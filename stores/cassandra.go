@@ -53,13 +53,15 @@ func retentionTypeToTime(time int, period string) int {
 
 func NewCassandraStore(config config.Main) Store {
 	store := new(CassandraStore)
-
-	password_auth := new(cql.PasswordAuthenticator)
-	password_auth.Username = config.StoreCassandra.Username
-	password_auth.Password = config.StoreCassandra.Password
-
 	store.Cluster = cql.NewCluster(config.StoreCassandra.Servers...)
-	store.Cluster.Authenticator = password_auth
+
+	if config.StoreCassandra.Username != "" && config.StoreCassandra.Password != "" {
+		password_auth := new(cql.PasswordAuthenticator)
+		password_auth.Username = config.StoreCassandra.Username
+		password_auth.Password = config.StoreCassandra.Password
+		store.Cluster.Authenticator = password_auth
+	}
+
 	store.Keyspace = config.StoreCassandra.Keyspace
 	store.StrategyOptions = config.StoreCassandra.StrategyOptions.Options
 	store.ReplicationStrategy = config.StoreCassandra.ReplicationStrategy
