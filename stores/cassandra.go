@@ -105,7 +105,14 @@ func createCassandraTables(store *CassandraStore) {
 	}
 
 	for _, table_name := range tables {
-		query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (key text, column1 text, value text, PRIMARY KEY(key, column1))`, table_name)
+		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (key text, column1 text, value text, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", table_name)
+		if err := store.Session.Query(query).Exec(); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, resolution := range store.Retentions {
+		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS ts%s (key text, column1 bigint, value float, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", resolution)
 		if err := store.Session.Query(query).Exec(); err != nil {
 			panic(err)
 		}
@@ -115,7 +122,7 @@ func createCassandraTables(store *CassandraStore) {
 func initializeCassandraKeyspace(store *CassandraStore) {
 	session, _ := store.Cluster.CreateSession()
 	replication_options := strategyOptionsToString(store)
-	query := fmt.Sprintf(`CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class' : '%s', %s}`, store.Keyspace, store.ReplicationStrategy, replication_options)
+	query := fmt.Sprintf("CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class' : '%s', %s}", store.Keyspace, store.ReplicationStrategy, replication_options)
 
 	if err := session.Query(query).Exec(); err != nil {
 		panic(err)
