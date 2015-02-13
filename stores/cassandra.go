@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+type CassandraRetention struct {
+	Resolution int
+	Period     int
+}
+
 type CassandraStore struct {
 	Cluster             *cql.ClusterConfig
 	Keyspace            string
@@ -20,9 +25,19 @@ type CassandraStore struct {
 	Session             *cql.Session
 }
 
-type CassandraRetention struct {
-	Resolution int
-	Period     int
+type CassandraNode struct {
+	Name          string
+	ChildOrMetric string
+	IsMetric      bool
+}
+
+type CassandraMetadata struct {
+	AggregationMethod string
+	Retentions        []CassandraRetention
+	StartTime         int
+	TimeStep          int
+	// xFilesFactor renamed to make sense
+	NonNilPercentage float64
 }
 
 func retentionToTimeInterval(retention string) int {
@@ -141,6 +156,11 @@ func (i CassandraStore) Add(metric metrics.Metric) (err error) {
 
 func (i CassandraStore) Get(name string) (our_el *chains.ChainEl, err error) {
 	our_el = chains.NewChainEl()
+	//go func(our_el *chains.ChainEl) {
+	//	from := <-our_el.Settings
+	//	until := <-our_el.Settings
+	//	query := fmt.Sprintf("SELECT * FROM metadata WHERE key = %s", name)
+	//}(our_el)
 
 	return our_el, nil
 }
