@@ -111,8 +111,8 @@ func createCassandraTables(store *CassandraStore) {
 		}
 	}
 
-	for _, resolution := range store.Retentions {
-		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS ts%s (key text, column1 bigint, value float, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", resolution)
+	for _, retention := range store.Retentions {
+		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS ts%s (key text, column1 bigint, value float, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", retention.Resolution)
 		if err := store.Session.Query(query).Exec(); err != nil {
 			panic(err)
 		}
