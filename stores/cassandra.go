@@ -6,6 +6,7 @@ import (
 	"github.com/graphite-ng/graphite-ng/chains"
 	"github.com/graphite-ng/graphite-ng/config"
 	"github.com/graphite-ng/graphite-ng/metrics"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -31,12 +32,19 @@ type CassandraNode struct {
 	IsMetric      bool
 }
 
+type CassandraMetric struct {
+	timestamp int
+	value     float64
+}
+
 type CassandraMetadata struct {
+	Key               string
 	AggregationMethod string
-	Retentions        []CassandraRetention
+	Retentions        []int
 	StartTime         int
 	TimeStep          int
 	// xFilesFactor renamed to make sense
+	//Retentions        []CassandraRetention
 	NonNilPercentage float64
 }
 
@@ -154,13 +162,98 @@ func (i CassandraStore) Add(metric metrics.Metric) (err error) {
 	return
 }
 
+func getMetadata(name string, i CassandraStore) CassandraMetadata {
+	var key string
+	var column_key string
+	var value string
+	metadata_map := map[string]interface{}{
+		"key":        &key,
+		"column_key": &column_key,
+		"value":      &value,
+	}
+
+	metadata := new(CassandraMetadata)
+	metadata.Key = name
+
+	query := fmt.Sprintf("SELECT * FROM metadata WHERE key = %s", name)
+	iter := i.Session.Query(query).Iter()
+	for iter.MapScan(metadata_map) {
+		if str, ok := metadata_map["value"].(string); ok {
+			switch metadata_map["column_key"] {
+			case "aggregationMethod":
+				metadata.AggregationMethod = str
+			case "retentions":
+				val := strings.Split(str, ",")
+				vals := make([]int, len(val))
+				for i, v := range val {
+					if int_v, err := strconv.Atoi(v); err != nil {
+						vals[i] = int_v
+					} else {
+						log.Fatal("Unable to convert a retention value to an integer")
+
+					}
+				}
+				metadata.Retentions = vals
+			case "startTime":
+				if num_value, err := strconv.Atoi(str); err != nil {
+					log.Fatal("Unable to convert startTime to integer")
+				} else {
+					metadata.StartTime = num_value
+				}
+			case "timeStep":
+				if num_value, err := strconv.Atoi(str); err != nil {
+					log.Fatal("Unable to convert timeStep to integer")
+				} else {
+					metadata.TimeStep = num_value
+				}
+			case "xFilesFactor":
+				if num_value, err := strconv.ParseFloat(str, 64); err != nil {
+					log.Fatal("Unable to convert xFilesFactor to float")
+				} else {
+					metadata.NonNilPercentage = num_value
+				}
+			}
+		} else {
+			log.Fatal("Got a non string type back from metadata query")
+		}
+	}
+	if err := iter.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	return *metadata
+}
+
+func getData(name string, i CassandraStore, metadata CassandraMetadata, from int32, until int32) int {
+
+	var key string
+	var timestamp int
+	var value float64
+	value_map := map[string]interface{}{
+		"key":       &key,
+		"timestamp": &timestamp,
+		"value":     &value,
+	}
+
+	// For testing only. I'm too lazy to implement real querying right now
+	// TODO Actually implement searching in the other ts* tables for the appropriate historical data
+	query := fmt.Sprintf("SELECT * FROM ts60 WHERE key = %s AND column1 >= %d AND column1 <= %d ORDER BY column1", name, from, until)
+	iter := i.Session.Query(query).Iter()
+	for iter.MapScan(value_map) {
+	}
+	return 1
+}
+
 func (i CassandraStore) Get(name string) (our_el *chains.ChainEl, err error) {
 	our_el = chains.NewChainEl()
-	//go func(our_el *chains.ChainEl) {
-	//	from := <-our_el.Settings
-	//	until := <-our_el.Settings
-	//	query := fmt.Sprintf("SELECT * FROM metadata WHERE key = %s", name)
-	//}(our_el)
+	go func(our_el *chains.ChainEl) {
+		from := <-our_el.Settings
+		until := <-our_el.Settings
+
+		metadata := getMetadata(name, i)
+		data := getData(name, i, metadata, from, until)
+
+	}(our_el)
 
 	return our_el, nil
 }
