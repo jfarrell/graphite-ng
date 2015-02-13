@@ -101,7 +101,7 @@ func strategyOptionsToString(store *CassandraStore) string {
 func createCassandraTables(store *CassandraStore) {
 	tables := []string{"global_nodes", "metadata"}
 	if store.LocalDcName != "" {
-		tables = append(tables, fmt.Sprintf("dc_%s_nodes", store.LocalDcName))
+		tables = append(tables, fmt.Sprintf("dc_%s_nodes", strings.Replace(store.LocalDcName, "_", "-", -1)))
 	}
 
 	for _, table_name := range tables {
@@ -112,7 +112,7 @@ func createCassandraTables(store *CassandraStore) {
 	}
 
 	for _, retention := range store.Retentions {
-		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS ts%s (key text, column1 bigint, value float, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", retention.Resolution)
+		query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS ts%d (key text, column1 bigint, value float, PRIMARY KEY(key, column1)) WITH COMPACT STORAGE", retention.Resolution)
 		if err := store.Session.Query(query).Exec(); err != nil {
 			panic(err)
 		}
