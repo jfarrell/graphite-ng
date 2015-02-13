@@ -65,6 +65,7 @@ func NewCassandraStore(config config.Main) Store {
 	store.Keyspace = config.StoreCassandra.Keyspace
 	store.StrategyOptions = config.StoreCassandra.StrategyOptions
 	store.ReplicationStrategy = config.StoreCassandra.ReplicationStrategy
+	store.LocalDcName = config.StoreCassandra.LocalDcName
 
 	retentions := make([]CassandraRetention, len(config.StoreCassandra.Retentions))
 	for i, r := range config.StoreCassandra.Retentions {
@@ -99,7 +100,8 @@ func strategyOptionsToString(store *CassandraStore) string {
 func createCassandraTables(store *CassandraStore) {
 	tables := []string{"global_nodes", "metadata"}
 	if store.LocalDcName != "" {
-		tables = append(tables, store.LocalDcName)
+		table_name := strings.Split(store.LocalDcName, "-", "_")
+		tables = append(tables, fmt.Sprintf("dc_%s_nodes", table_name))
 	}
 
 	for _, table_name := range tables {
