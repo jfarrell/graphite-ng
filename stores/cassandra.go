@@ -133,8 +133,9 @@ func (i CassandraStore) Add(metric metrics.Metric) (err error) {
 }
 
 func (i CassandraStore) Get(name string) (our_el *chains.ChainEl, err error) {
+	our_el = chains.NewChainEl()
 
-	return
+	return our_el, nil
 }
 
 func (i CassandraStore) Has(name string) (found bool, err error) {
