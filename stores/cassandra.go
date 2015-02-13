@@ -101,7 +101,7 @@ func strategyOptionsToString(store *CassandraStore) string {
 func createCassandraTables(store *CassandraStore) {
 	tables := []string{"global_nodes", "metadata"}
 	if store.LocalDcName != "" {
-		tables = append(tables, fmt.Sprintf("dc_%s_nodes", strings.Replace(store.LocalDcName, "_", "-", -1)))
+		tables = append(tables, fmt.Sprintf("dc_%s_nodes", store.LocalDcName))
 	}
 
 	for _, table_name := range tables {
